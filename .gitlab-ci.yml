@@ -13,19 +13,19 @@ bump-version-ios-sdk:
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
-  script:
-    - NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
-    - NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
-    - sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
-    - |
-      if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then
-        echo "Bumping version to $NEW_VERSION_TAG"
-        git add Package.swift
-        git commit -m "bump version to $NEW_VERSION_TAG [skip ci]"
-        git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" HEAD:$CI_COMMIT_BRANCH --follow-tags -o ci.skip
-      else
-        echo "No version bump required"
-      fi
+  script: |
+    NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
+    NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
+    sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
+
+    if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then
+      echo "Bumping version to $NEW_VERSION_TAG"
+      git add Package.swift
+      git commit -m "bump version to $NEW_VERSION_TAG [skip ci]"
+      git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" HEAD:$CI_COMMIT_BRANCH --follow-tags -o ci.skip
+    else
+      echo "No version bump required"
+    fi
 
 release-ios-sdk:
   stage: release
@@ -38,20 +38,20 @@ release-ios-sdk:
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
-  script:
-    - git fetch --tags
-    - git checkout "$CI_COMMIT_BRANCH"
-    - NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
-    - NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
-    - sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
-    - git add Package.swift
-    - git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bump > CHANGELOG.md
-    - git add CHANGELOG.md
-    - git commit -m "Release $NEW_VERSION_TAG"
-    - git tag -a "$NEW_VERSION_TAG" -m "Release $NEW_VERSION_TAG"
-    - git tag -a "v$NEW_VERSION" -m "SPM-compatible tag for $NEW_VERSION"
-    - git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" HEAD:$CI_COMMIT_BRANCH --follow-tags -o ci.skip
-    - git push origin "v$NEW_VERSION"
+  script: |
+    git fetch --tags
+    git checkout "$CI_COMMIT_BRANCH"
+    NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
+    NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
+    sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
+    git add Package.swift
+    git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bump > CHANGELOG.md
+    git add CHANGELOG.md
+    git commit -m "Release $NEW_VERSION_TAG"
+    git tag -a "$NEW_VERSION_TAG" -m "Release $NEW_VERSION_TAG"
+    git tag -a "v$NEW_VERSION" -m "SPM-compatible tag for $NEW_VERSION"
+    git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" HEAD:$CI_COMMIT_BRANCH --follow-tags -o ci.skip
+    git push origin "v$NEW_VERSION"
 
 publish-ios-sdk:
   stage: publish
@@ -66,18 +66,18 @@ publish-ios-sdk:
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
-  script:
-    - git fetch --tags
-    - git checkout "$CI_COMMIT_BRANCH"
-    - git clean -dxf
-    - curl -L "https://github.com/orhun/git-cliff/releases/download/v2.4.0/git-cliff-2.4.0-aarch64-apple-darwin.tar.gz" -o cliff.tar.gz
-    - tar -xvf cliff.tar.gz
-    - chmod +x ./git-cliff-2.4.0/git-cliff
-    - NEW_VERSION_TAG=$(./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
-    - ./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --latest > GithubRelease.md
-    - curl -sS https://webi.sh/gh | sh
-    - source ~/.config/envman/PATH.env || true
-    - echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
-    - git remote add github https://github.com/NoctuaLabs/noctua-native-sdk-ios.git || true
-    - gh release create "$NEW_VERSION_TAG" --title "$NEW_VERSION_TAG" --notes-file GithubRelease.md || echo "GitHub release already exists"
-    - git remote remove github
+  script: |
+    git fetch --tags
+    git checkout "$CI_COMMIT_BRANCH"
+    git clean -dxf
+    curl -L "https://github.com/orhun/git-cliff/releases/download/v2.4.0/git-cliff-2.4.0-aarch64-apple-darwin.tar.gz" -o cliff.tar.gz
+    tar -xvf cliff.tar.gz
+    chmod +x ./git-cliff-2.4.0/git-cliff
+    NEW_VERSION_TAG=$(./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
+    ./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --latest > GithubRelease.md
+    curl -sS https://webi.sh/gh | sh
+    source ~/.config/envman/PATH.env || true
+    echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
+    git remote add github https://github.com/NoctuaLabs/noctua-native-sdk-ios.git || true
+    gh release create "$NEW_VERSION_TAG" --title "$NEW_VERSION_TAG" --notes-file GithubRelease.md || echo "GitHub release already exists"
+    git remote remove github
