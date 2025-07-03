@@ -3,6 +3,15 @@ stages:
   - release
   - publish
 
+.bump-version:
+  image :
+    name: alpine/git
+    entrypoint: [""]
+  before_script:
+    - apk add git-cliff
+    - git config --global user.email "gitlab-ci@noctua.gg"
+    - git config --global user.name "Noctua Gitlab CI"
+
 bump-version-ios-sdk:
   extends: .bump-version
   stage: bump-version
