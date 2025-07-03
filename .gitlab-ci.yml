@@ -3,11 +3,6 @@ stages:
   - release
   - publish
 
-.bumper-ios-common: &bumper-ios-common
-  variables:
-    GIT_STRATEGY: fetch
-    GIT_DEPTH: 0
-
 bump-version-ios-sdk:
   stage: bump-version
   rules:
@@ -16,12 +11,12 @@ bump-version-ios-sdk:
         - Package.swift
       when: always
   variables:
-    <<: *bumper-ios-common
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
   script:
     - NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
     - NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
-    - >
-      sed -i '' "s/\(version: *\).*/\1\"$NEW_VERSION\",/" Package.swift
+    - sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
     - |
       if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then
         echo "Bumping version to $NEW_VERSION_TAG"
@@ -41,14 +36,14 @@ release-ios-sdk:
         - Package.swift
       when: manual
   variables:
-    <<: *bumper-ios-common
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
   script:
     - git fetch --tags
-    - git checkout $CI_COMMIT_BRANCH
+    - git checkout "$CI_COMMIT_BRANCH"
     - NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
     - NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
-    - >
-      sed -i '' "s/\(version: *\).*/\1\"$NEW_VERSION\",/" Package.swift
+    - sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
     - git add Package.swift
     - git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bump > CHANGELOG.md
     - git add CHANGELOG.md
@@ -69,10 +64,11 @@ publish-ios-sdk:
         - Package.swift
       when: on_success
   variables:
-    <<: *bumper-ios-common
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
   script:
     - git fetch --tags
-    - git checkout $CI_COMMIT_BRANCH
+    - git checkout "$CI_COMMIT_BRANCH"
     - git clean -dxf
     - curl -L "https://github.com/orhun/git-cliff/releases/download/v2.4.0/git-cliff-2.4.0-aarch64-apple-darwin.tar.gz" -o cliff.tar.gz
     - tar -xvf cliff.tar.gz
