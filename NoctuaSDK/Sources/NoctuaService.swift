@@ -127,7 +127,6 @@ class NoctuaService: NSObject, SKProductsRequestDelegate, SKPaymentTransactionOb
                 callback(false, "Payment deferred")
 
             case .purchasing:
-                // In progress; do nothing.
                 logger.warning("Transaction in progress")
                 break
 
