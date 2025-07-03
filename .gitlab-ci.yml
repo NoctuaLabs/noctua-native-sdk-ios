@@ -4,6 +4,7 @@ stages:
   - publish
 
 bump-version-ios-sdk:
+  extends: .bump-version
   stage: bump-version
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -28,6 +29,7 @@ bump-version-ios-sdk:
     fi
 
 release-ios-sdk:
+  extends: .bump-version
   stage: release
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
