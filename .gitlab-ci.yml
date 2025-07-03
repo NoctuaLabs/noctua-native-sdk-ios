@@ -3,9 +3,10 @@ stages:
   - release
   - publish
 
-.default-ios-variables: &default-ios-variables
-  GIT_STRATEGY: fetch
-  GIT_DEPTH: 0
+.bumper-ios-common: &bumper-ios-common
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
 
 bump-version-ios-sdk:
   stage: bump-version
@@ -15,11 +16,12 @@ bump-version-ios-sdk:
         - Package.swift
       when: always
   variables:
-    <<: *default-ios-variables
+    <<: *bumper-ios-common
   script:
     - NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
-    - NEW_VERSION=$(echo $NEW_VERSION_TAG | sed -r "s/ios-sdk-v(.*)/\1/")
-    - sed -i "" "s/\(version: *\).*/\1\"$NEW_VERSION\",/" Package.swift
+    - NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
+    - >
+      sed -i '' "s/\(version: *\).*/\1\"$NEW_VERSION\",/" Package.swift
     - |
       if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then
         echo "Bumping version to $NEW_VERSION_TAG"
@@ -39,13 +41,14 @@ release-ios-sdk:
         - Package.swift
       when: manual
   variables:
-    <<: *default-ios-variables
+    <<: *bumper-ios-common
   script:
     - git fetch --tags
     - git checkout $CI_COMMIT_BRANCH
     - NEW_VERSION_TAG=$(git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bumped-version)
-    - NEW_VERSION=$(echo $NEW_VERSION_TAG | sed -r "s/ios-sdk-v(.*)/\1/")
-    - sed -i "" "s/\(version: *\).*/\1\"$NEW_VERSION\",/" Package.swift
+    - NEW_VERSION=$(echo "$NEW_VERSION_TAG" | sed -r "s/ios-sdk-v(.*)/\1/")
+    - >
+      sed -i '' "s/\(version: *\).*/\1\"$NEW_VERSION\",/" Package.swift
     - git add Package.swift
     - git-cliff --include-path "Package.swift" --tag-pattern "ios-sdk-v.*" --bump > CHANGELOG.md
     - git add CHANGELOG.md
@@ -66,7 +69,7 @@ publish-ios-sdk:
         - Package.swift
       when: on_success
   variables:
-    <<: *default-ios-variables
+    <<: *bumper-ios-common
   script:
     - git fetch --tags
     - git checkout $CI_COMMIT_BRANCH
