@@ -9,7 +9,6 @@ bump-version-ios-sdk:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - Package.swift
-      when: always
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
@@ -29,12 +28,10 @@ bump-version-ios-sdk:
 
 release-ios-sdk:
   stage: release
-  needs: [bump-version-ios-sdk]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - Package.swift
-      when: manual
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
@@ -57,12 +54,10 @@ publish-ios-sdk:
   stage: publish
   tags:
     - macmini
-  needs: [release-ios-sdk]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - Package.swift
-      when: on_success
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
