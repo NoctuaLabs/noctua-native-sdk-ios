@@ -1,6 +1,6 @@
 # Noctua Native SDK for iOS
 
-The official native SDK for iOS by NoctuaLabs, designed to support analytics and event tracking with seamless integration via Swift Package Manager.
+The official Noctua Native SDK for iOS by NoctuaLabs, designed to support analytics and event tracking with seamless integration via Swift Package Manager.
 
 ---
 

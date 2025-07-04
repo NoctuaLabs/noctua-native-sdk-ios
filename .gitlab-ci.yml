@@ -11,21 +11,23 @@ stages:
     - apk add git-cliff
     - git config --global user.email "gitlab-ci@noctua.gg"
     - git config --global user.name "Noctua Gitlab CI"
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
 
 bump-version-ios-sdk:
-  extends: 
-    - .bump-version
+  extends: .bump-version
   stage: bump-version
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - Package.swift
         - NoctuaSDK/**/*
-  variables:
-    GIT_STRATEGY: fetch
-    GIT_DEPTH: 0
+        - README.md
   script: |
-    NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version)
+    set -e
+    git fetch --tags
+    NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "0.1.0")
     sed -i "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
 
     if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then
@@ -47,18 +49,19 @@ release-ios-sdk:
       changes:
         - Package.swift
         - NoctuaSDK/**/*
+        - README.md
   when: manual
-  variables:
-    GIT_STRATEGY: fetch
-    GIT_DEPTH: 0
   script: |
+    set -e
     git fetch --tags
     git checkout "$CI_COMMIT_BRANCH"
-    NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version)
+    NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "0.1.0")
     sed -i "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
     git add Package.swift
-    git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bump > CHANGELOG.md
-    git add CHANGELOG.md
+
+    git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bump > /Users/user/noctua-sdk-native-ios/CHANGELOG.md
+    git add /Users/user/noctua-sdk-native-ios/CHANGELOG.md
+
     git commit -m "Release v$NEW_VERSION"
     git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
     git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" HEAD:$CI_COMMIT_BRANCH --tags -o ci.skip
@@ -73,22 +76,26 @@ publish-ios-sdk:
       changes:
         - Package.swift
         - NoctuaSDK/**/*
+        - README.md
   when: on_success
-  variables:
-    GIT_STRATEGY: fetch
-    GIT_DEPTH: 0
   script: |
+    set -e
     git fetch --tags
     git checkout "$CI_COMMIT_BRANCH"
     git clean -dxf
+
     curl -L "https://github.com/orhun/git-cliff/releases/download/v2.4.0/git-cliff-2.4.0-aarch64-apple-darwin.tar.gz" -o cliff.tar.gz
     tar -xvf cliff.tar.gz
     chmod +x ./git-cliff-2.4.0/git-cliff
-    NEW_VERSION=$(./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version)
-    ./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --latest > GithubRelease.md
+
+    NEW_VERSION=$(./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "0.1.0")
+    ./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --latest > /Users/user/noctua-sdk-native-ios/CHANGELOG.md
+    cp /Users/user/noctua-sdk-native-ios/CHANGELOG.md GithubRelease.md
+
     curl -sS https://webi.sh/gh | sh
     source ~/.config/envman/PATH.env || true
     echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
+
     git remote add github https://github.com/NoctuaLabs/noctua-native-sdk-ios.git || true
     gh release create "v$NEW_VERSION" --title "v$NEW_VERSION" --notes-file GithubRelease.md || echo "GitHub release already exists"
     git remote remove github
