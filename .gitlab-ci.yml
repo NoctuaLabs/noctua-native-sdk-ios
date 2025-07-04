@@ -28,6 +28,7 @@ bump-version-ios-sdk:
     set -e
     git fetch --tags
     NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "0.1.0")
+    NEW_VERSION="${NEW_VERSION#v}"  # Strip leading "v"
     sed -i 's|^// version: ".*"|// version: "'$NEW_VERSION'"|' Package.swift
 
     if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then
@@ -55,13 +56,23 @@ release-ios-sdk:
     set -e
     git fetch --tags
     git checkout "$CI_COMMIT_BRANCH"
+
     NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "0.1.0")
+    NEW_VERSION="${NEW_VERSION#v}"  # Strip leading "v"
+
+    # Update version in Package.swift
     sed -i 's|^// version: ".*"|// version: "'$NEW_VERSION'"|' Package.swift
     git add Package.swift
 
-    git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bump > /Users/user/noctua-sdk-native-ios/CHANGELOG.md
-    git add /Users/user/noctua-sdk-native-ios/CHANGELOG.md
+    # Generate and commit CHANGELOG
+    git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bump > CHANGELOG.md
+    git add CHANGELOG.md
 
+    # Update version in README.md
+    sed -i 's|^\*\*Current Version:\*\* `.*`|**Current Version:** `'"$NEW_VERSION"'`|' README.md
+    git add README.md
+
+    # Commit and tag
     git commit -m "Release v$NEW_VERSION"
     git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
     git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" HEAD:$CI_COMMIT_BRANCH --tags -o ci.skip
@@ -89,6 +100,7 @@ publish-ios-sdk:
     chmod +x ./git-cliff-2.4.0/git-cliff
 
     NEW_VERSION=$(./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "0.1.0")
+    NEW_VERSION="${NEW_VERSION#v}"  # Strip leading "v"
     ./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --latest > /Users/user/noctua-sdk-native-ios/CHANGELOG.md
     cp /Users/user/noctua-sdk-native-ios/CHANGELOG.md GithubRelease.md
 
