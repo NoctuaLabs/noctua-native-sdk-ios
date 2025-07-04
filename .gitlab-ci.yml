@@ -26,7 +26,7 @@ bump-version-ios-sdk:
     GIT_DEPTH: 0
   script: |
     NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version)
-    sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
+    sed -i "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
 
     if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then
       echo "Bumping version to v$NEW_VERSION"
@@ -55,7 +55,7 @@ release-ios-sdk:
     git fetch --tags
     git checkout "$CI_COMMIT_BRANCH"
     NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version)
-    sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
+    sed -i "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
     git add Package.swift
     git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bump > CHANGELOG.md
     git add CHANGELOG.md
