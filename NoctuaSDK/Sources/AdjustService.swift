@@ -103,6 +103,7 @@ class AdjustService {
 
         let event = ADJEvent(eventToken: eventToken)!
 
+        // Add parameters to the event`
         for (key, value) in payload {
             event.addCallbackParameter(key, value: "\(value)")
         }
