@@ -73,7 +73,11 @@ release-ios-sdk:
     sed -i 's|^\*\*Current Version:\*\* `.*`|**Current Version:** `'"$NEW_VERSION"'`|' README.md
     git add README.md
 
-    git commit -m "Release $NEW_VERSION"
+    if [ -n "$(git status --porcelain)" ]; then
+      git commit -m "Release $NEW_VERSION"
+    else
+      echo "No changes to commit during release"
+    fi
 
     if ! git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
       git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
@@ -104,10 +108,14 @@ publish-ios-sdk:
     tar -xvf cliff.tar.gz
     chmod +x ./git-cliff-2.4.0/git-cliff
 
-    NEW_VERSION=$(./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "v0.1.0")
+    #Extract version from Package.swift comment
+    NEW_VERSION=$(grep '^// version:' Package.swift | sed -E 's|// version: "([^"]+)"|\1|')
+
+    #Generate CHANGELOG using git-cliff
     ./git-cliff-2.4.0/git-cliff --include-path "Package.swift" --tag-pattern "v.*" --latest > CHANGELOG.md
     cp CHANGELOG.md GithubRelease.md
 
+    #Authenticate GitHub CLI and publish release
     curl -sS https://webi.sh/gh | sh
     source ~/.config/envman/PATH.env || true
     echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
