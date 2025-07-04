@@ -28,7 +28,7 @@ bump-version-ios-sdk:
     set -e
     git fetch --tags
 
-    NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern ".*" --bumped-version || echo "v0.1.0")
+    NEW_VERSION=$(git-cliff --include-path "Package.swift" --tag-pattern "v.*" --bumped-version || echo "v0.1.0")
     sed -i 's|^// version: ".*"|// version: "'$NEW_VERSION'"|' Package.swift
 
     if [ -n "$(git diff --name-only HEAD -- Package.swift)" ]; then

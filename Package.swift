@@ -1,5 +1,5 @@
 // swift-tools-version:6.1
-// version: "vv0.1.4"
+// version: "0.1.0"
 
 import PackageDescription
 
