@@ -18,7 +18,7 @@
 NEW_VERSION="x.y.z"
 
 # Update version in Package.swift
-sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
+sed -i "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
 
 # Commit and tag the new release
 git add Package.swift
