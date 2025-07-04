@@ -113,7 +113,7 @@ publish-ios-sdk:
     echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
 
     git remote add github https://github.com/NoctuaLabs/noctua-native-sdk-ios.git || true
-    gh release create "$NEW_VERSION" --title "$NEW_VERSION" --notes-file GithubRelease.md || echo "⚠️ GitHub release already exists"
+    gh release create "$NEW_VERSION" --title "$NEW_VERSION" --notes-file GithubRelease.md || echo "GitHub release already exists"
     git remote remove github
 
     echo "iOS SDK $NEW_VERSION published successfully"
