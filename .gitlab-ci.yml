@@ -19,6 +19,7 @@ bump-version-ios-sdk:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - Package.swift
+        - NoctuaSDK/**/*
   variables:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
@@ -44,6 +45,7 @@ release-ios-sdk:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - Package.swift
+        - NoctuaSDK/**/*
   when: manual
   variables:
     GIT_STRATEGY: fetch
@@ -72,6 +74,7 @@ publish-ios-sdk:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - Package.swift
+        - NoctuaSDK/**/*
   when: on_success
   variables:
     GIT_STRATEGY: fetch
