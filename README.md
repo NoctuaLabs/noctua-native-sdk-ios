@@ -1,31 +1,37 @@
-# Noctua iOS SDK
+# Noctua Native SDK for iOS
 
-## Development
-
-- Your work email should be tied to the provisioning profile for development.  
-  Please login with your work email in **Xcode → Settings → Accounts**.
-- This SDK uses **Swift Package Manager** only.  
-  No need to run `pod install` — just open the project directly with Xcode.
+The official native SDK for iOS by NoctuaLabs, designed to support analytics and event tracking with seamless integration via Swift Package Manager.
 
 ---
 
-## Manual Release Guide
+## 📦 Installation (Swift Package Manager)
 
-### 1. Bump and Tag Version
+Use the GitHub repo as a package dependency in Xcode:
 
-```sh
-# Replace x.y.z with the new version you want to release
-NEW_VERSION="x.y.z"
+1. Open your project in Xcode.
+2. Go to **File > Add Packages…**
+3. Enter the URL: https://github.com/NoctuaLabs/noctua-native-sdk-ios.git
+4. Choose the latest version (e.g. `0.1.0`) and finish the setup
 
-# Update version in Package.swift
-sed -i '' "s/\\(version: *\\).*/\\1\"$NEW_VERSION\",/" Package.swift
+### Or add to `Package.swift`
 
-# Commit and tag the new release
-git add Package.swift
-git commit -m "Release v$NEW_VERSION"
-git tag -a "ios-sdk-v$NEW_VERSION" -m "Release ios-sdk-v$NEW_VERSION"
-git tag -a "v$NEW_VERSION" -m "SPM-compatible tag"
+```swift
+.package(
+url: "https://github.com/NoctuaLabs/noctua-native-sdk-ios.git",
+from: "0.1.0"
+)
 
-# Push to GitLab and GitHub
-git push origin HEAD --follow-tags
-git push origin "v$NEW_VERSION"
+.target(
+  name: "YourApp",
+  dependencies: [
+    .product(name: "NoctuaSDK", package: "noctua-native-sdk-ios")
+  ]
+)
+
+.target(
+  name: "YourApp",
+  dependencies: [
+    .product(name: "NoctuaSDK", package: "noctua-native-sdk-ios")
+  ]
+)
+
