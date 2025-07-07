@@ -18,9 +18,6 @@ stages:
         tar -xzf cliff.tar.gz
         mv git-cliff-2.4.0/git-cliff /usr/local/bin/
       fi
-  variables:
-    GIT_STRATEGY: fetch
-    GIT_DEPTH: 0
 
 bump-version-ios-sdk:
   extends: .bump-version
@@ -32,6 +29,9 @@ bump-version-ios-sdk:
         - NoctuaSDK/**/*
         - README.md
       when: always
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
   script: |
     git fetch --tags
     NEW_VERSION=$(git-cliff --include-path "NoctuaSDK/**/*" --include-path "Package.swift" --bumped-version | sed -r "s/^v?//")
@@ -58,6 +58,9 @@ release-ios-sdk:
         - NoctuaSDK/**/*
         - README.md
       when: manual
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
   script: |
     git fetch --tags
     git checkout origin/$CI_COMMIT_BRANCH
@@ -82,6 +85,9 @@ publish-ios-sdk:
         - NoctuaSDK/**/*
         - README.md
       when: on_success
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 0
   script: |
     git fetch --tags
     git checkout origin/$CI_COMMIT_BRANCH
