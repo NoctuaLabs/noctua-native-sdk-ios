@@ -1,4 +1,5 @@
 import Security
+import Foundation
 import os
 
 struct Account : Encodable {
