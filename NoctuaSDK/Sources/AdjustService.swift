@@ -44,6 +44,7 @@ class AdjustService {
         let adjustConfig = ADJConfig(appToken: appToken, environment: environment)
         adjustConfig?.logLevel = if config.environment == "production" { ADJLogLevel.warn } else { ADJLogLevel.debug }
         
+        // Initialize Adjust SDK
         Adjust.initSdk(adjustConfig)
 #else
         throw AdjustServiceError.adjustNotFound
