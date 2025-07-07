@@ -1,6 +1,10 @@
 import Foundation
 
+@MainActor
 @objc public class Noctua: NSObject {
+    
+    static var plugin: NoctuaPlugin?
+
     @objc public static func initNoctua() throws {
         if plugin == nil {
             plugin = NoctuaPlugin(config: try loadConfig())
@@ -51,7 +55,6 @@ import Foundation
         plugin?.onOffline()
     }
     
-    static var plugin: NoctuaPlugin?
 }
 
 enum ConfigurationError: Error {
