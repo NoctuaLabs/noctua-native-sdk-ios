@@ -22,30 +22,6 @@ stages:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
 
-.generate_next_version: &get_next_version |
-  get_next_version() {
-    local last major minor patch bump="patch"
-
-    last="$(git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)"
-    [[ -z "$last" ]] && { echo "0.1.0"; return; }
-
-    IFS='.' read -r major minor patch <<< "$last"
-    commits=$(git log "${last}..HEAD" --pretty=format:%s)
-
-    if   echo "$commits" | grep -q "BREAKING CHANGE"; then bump="major"
-    elif echo "$commits" | grep -E -q "^feat(\(|:|\s)"; then bump="minor"
-    elif echo "$commits" | grep -E -q "^(fix|perf|refactor|docs|chore)(\(|:|\s)"; then bump="patch"
-    fi
-
-    case "$bump" in
-      major) major=$((major + 1)); minor=0; patch=0 ;;
-      minor) minor=$((minor + 1)); patch=0 ;;
-      patch) patch=$((patch + 1)) ;;
-    esac
-
-    echo "${major}.${minor}.${patch}"
-  }
-
 bump-version-ios-sdk:
   extends: .bump-version
   stage: bump-version
@@ -60,25 +36,28 @@ bump-version-ios-sdk:
     git fetch --tags
     git pull origin "$CI_COMMIT_BRANCH"
 
-    <<: *get_next_version
-    NEW_VERSION="$(get_next_version)"
+    # Manually set your version here (keep in sync with podspec!)
+    NEW_VERSION="0.14.1"
     TAG_NAME="$NEW_VERSION"
 
+    # Update Package.swift
     sed -i 's|^// version: ".*"|// version: "'$NEW_VERSION'"|' Package.swift
 
+    # Commit version bump if changed
     if [ -n "$(git diff --name-only Package.swift)" ]; then
       git add Package.swift
       git commit -m "chore(spm): bump version to $NEW_VERSION [skip ci]"
 
+      # Tag if not exists
       if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
         git tag -a "$TAG_NAME" -m "Release $NEW_VERSION"
         git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" \
           HEAD:$CI_COMMIT_BRANCH --tags -o ci.skip
       else
-        echo "Tag $TAG_NAME already exists, skipping"
+        echo "Tag $TAG_NAME already exists"
       fi
     else
-      echo "No changes needed"
+      echo "No changes to Package.swift"
     fi
 
 release-ios-sdk:
@@ -87,10 +66,6 @@ release-ios-sdk:
   needs: [bump-version-ios-sdk]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - Package.swift
-        - NoctuaSDK/**/*
-        - README.md
   when: manual
   script: |
     set -e
@@ -98,8 +73,7 @@ release-ios-sdk:
     git checkout "$CI_COMMIT_BRANCH"
     git pull origin "$CI_COMMIT_BRANCH"
 
-    <<: *get_next_version
-    NEW_VERSION="$(get_next_version)"
+    NEW_VERSION="0.14.1"
     TAG_NAME="$NEW_VERSION"
 
     sed -i 's|^// version: ".*"|// version: "'$NEW_VERSION'"|' Package.swift
@@ -125,10 +99,6 @@ publish-ios-sdk:
   needs: [release-ios-sdk]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - Package.swift
-        - NoctuaSDK/**/*
-        - README.md
   when: on_success
   script: |
     set -e
@@ -141,7 +111,7 @@ publish-ios-sdk:
     tar -xvf cliff.tar.gz
     chmod +x ./git-cliff-2.4.0/git-cliff
 
-    NEW_VERSION=$(grep '^// version:' Package.swift | sed -E 's|// version: "([^"]+)"|\1|')
+    NEW_VERSION="0.14.1"
     TAG_NAME="$NEW_VERSION"
 
     ./git-cliff-2.4.0/git-cliff -c .git-cliff.toml --tag "$TAG_NAME" > GithubRelease.md
