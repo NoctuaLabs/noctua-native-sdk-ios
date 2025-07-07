@@ -1,7 +1,7 @@
 stages:
-  - bump-version
-  - release
-  - publish
+  - bump-version-ios-sdk
+  - release-ios-sdk
+  - publish-ios-sdk
 
 .bump-version:
   image:
