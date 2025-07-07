@@ -3,21 +3,18 @@ stages:
   - release
   - publish
 
-# ───────────────────────── Shared template ─────────────────────────
 .bump-version:
   image:
     name: alpine/git
     entrypoint: [""]
   before_script:
-    # ─ Git & toolchain ─
     - apk add --no-cache bash curl tar
     - git config --global user.email "gitlab-ci@noctua.gg"
     - git config --global user.name  "Noctua Gitlab CI"
-    # ─ git‑cliff ─
     - |
       if ! command -v git-cliff >/dev/null; then
         curl -L "https://github.com/orhun/git-cliff/releases/download/v2.4.0/git-cliff-2.4.0-x86_64-unknown-linux-musl.tar.gz" \
-          -o cliff.tar.gz
+        -o cliff.tar.gz
         tar -xzf cliff.tar.gz
         mv git-cliff-2.4.0/git-cliff /usr/local/bin/
       fi
@@ -25,20 +22,18 @@ stages:
     GIT_STRATEGY: fetch
     GIT_DEPTH: 0
 
-# ───────────────────────── Helper (used in both jobs) ─────────────────────────
 .generate_next_version: &get_next_version |
   get_next_version() {
     local last major minor patch bump="patch"
 
-    # Find latest semver tag
     last="$(git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)"
     [[ -z "$last" ]] && { echo "0.1.0"; return; }
 
     IFS='.' read -r major minor patch <<< "$last"
     commits=$(git log "${last}..HEAD" --pretty=format:%s)
 
-    if   echo "$commits" | grep -q "BREAKING CHANGE";                      then bump="major"
-    elif echo "$commits" | grep -E -q "^feat(\(|:|\s)";                    then bump="minor"
+    if   echo "$commits" | grep -q "BREAKING CHANGE"; then bump="major"
+    elif echo "$commits" | grep -E -q "^feat(\(|:|\s)"; then bump="minor"
     elif echo "$commits" | grep -E -q "^(fix|perf|refactor|docs|chore)(\(|:|\s)"; then bump="patch"
     fi
 
@@ -47,10 +42,10 @@ stages:
       minor) minor=$((minor + 1)); patch=0 ;;
       patch) patch=$((patch + 1)) ;;
     esac
+
     echo "${major}.${minor}.${patch}"
   }
 
-# ───────────────────────── Bump Job ─────────────────────────
 bump-version-ios-sdk:
   extends: .bump-version
   stage: bump-version
@@ -67,25 +62,25 @@ bump-version-ios-sdk:
 
     <<: *get_next_version
     NEW_VERSION="$(get_next_version)"
-    echo "Next version: $NEW_VERSION"
+    TAG_NAME="$NEW_VERSION"
 
-    # Update Package.swift header comment
     sed -i 's|^// version: ".*"|// version: "'$NEW_VERSION'"|' Package.swift
 
     if [ -n "$(git diff --name-only Package.swift)" ]; then
       git add Package.swift
-      git commit -m "chore(release): bump version to $NEW_VERSION [skip ci]"
+      git commit -m "chore(spm): bump version to $NEW_VERSION [skip ci]"
 
-      if ! git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
-        git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+      if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+        git tag -a "$TAG_NAME" -m "Release $NEW_VERSION"
         git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" \
           HEAD:$CI_COMMIT_BRANCH --tags -o ci.skip
+      else
+        echo "Tag $TAG_NAME already exists, skipping"
       fi
     else
-      echo "Package.swift already on $NEW_VERSION; nothing to commit"
+      echo "No changes needed"
     fi
 
-# ───────────────────────── Release Job ─────────────────────────
 release-ios-sdk:
   extends: .bump-version
   stage: release
@@ -101,37 +96,32 @@ release-ios-sdk:
     set -e
     git fetch --tags
     git checkout "$CI_COMMIT_BRANCH"
-    git pull --ff-only origin "$CI_COMMIT_BRANCH"
+    git pull origin "$CI_COMMIT_BRANCH"
 
     <<: *get_next_version
     NEW_VERSION="$(get_next_version)"
-    echo "Releasing $NEW_VERSION"
+    TAG_NAME="$NEW_VERSION"
 
-    # ─ Update version & docs ─
     sed -i 's|^// version: ".*"|// version: "'$NEW_VERSION'"|' Package.swift
     sed -i 's|^\*\*Current Version:\*\* `.*`|**Current Version:** `'"$NEW_VERSION"'`|' README.md
     git add Package.swift README.md
 
-    # ─ Generate CHANGELOG.md with git‑cliff ─
-    git-cliff -c .git-cliff.toml --tag "$NEW_VERSION" > CHANGELOG.md
+    git-cliff -c .git-cliff.toml --tag "$TAG_NAME" > CHANGELOG.md
     git add CHANGELOG.md
 
-    # ─ Commit ─
     if [ -n "$(git status --porcelain)" ]; then
       git commit -m "chore(release): $NEW_VERSION"
     fi
 
-    # ─ Tag & push ─
-    if ! git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
-      git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+    if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+      git tag -a "$TAG_NAME" -m "Release $NEW_VERSION"
       git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" \
         HEAD:$CI_COMMIT_BRANCH --tags -o ci.skip
     fi
 
-# ───────────────────────── Publish Job (unchanged) ─────────────────────────
 publish-ios-sdk:
   stage: publish
-  tags: [ macmini ]
+  tags: [macmini]
   needs: [release-ios-sdk]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -147,17 +137,22 @@ publish-ios-sdk:
     git pull origin "$CI_COMMIT_BRANCH"
     git clean -dxf
 
-    # build CHANGELOG.md for GitHub notes
-    NEW_VERSION=$(grep '^// version:' Package.swift | sed -E 's|// version: "([^"]+)"|\1|')
-    git-cliff -c .git-cliff.toml --tag "$NEW_VERSION" --latest > GithubRelease.md
+    curl -L "https://github.com/orhun/git-cliff/releases/download/v2.4.0/git-cliff-2.4.0-aarch64-apple-darwin.tar.gz" -o cliff.tar.gz
+    tar -xvf cliff.tar.gz
+    chmod +x ./git-cliff-2.4.0/git-cliff
 
-    # GitHub CLI & release (same as before) …
+    NEW_VERSION=$(grep '^// version:' Package.swift | sed -E 's|// version: "([^"]+)"|\1|')
+    TAG_NAME="$NEW_VERSION"
+
+    ./git-cliff-2.4.0/git-cliff -c .git-cliff.toml --tag "$TAG_NAME" > GithubRelease.md
+
     curl -sS https://webi.sh/gh | sh
     source ~/.config/envman/PATH.env || true
     echo "$GITHUB_ACCESS_TOKEN" | gh auth login --with-token
+
     git remote add github https://github.com/NoctuaLabs/noctua-native-sdk-ios.git || true
-    git push github "$NEW_VERSION" || true
-    gh release create "$NEW_VERSION" --title "$NEW_VERSION" --notes-file GithubRelease.md || true
+    git push github "$TAG_NAME" || echo "Tag $TAG_NAME already exists on GitHub"
+    gh release create "$TAG_NAME" --title "$NEW_VERSION" --notes-file GithubRelease.md || echo "GitHub release already exists"
     git remote remove github
 
-    echo "iOS SDK $NEW_VERSION published"
+    echo "iOS SDK $NEW_VERSION published successfully"
