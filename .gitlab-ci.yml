@@ -68,7 +68,6 @@ release-ios-sdk:
     git-cliff --include-path "NoctuaSDK/**/*" --include-path "Package.swift" --bump > CHANGELOG.md
     git add CHANGELOG.md
     git commit -m "Release $NEW_VERSION"
-    git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
     git push "https://$GITLAB_BUILDER_USER:$GITLAB_BUILDER_ACCESS_TOKEN@gitlab.com/evosverse/noctua/noctua-sdk-native-ios.git" \
       HEAD:$CI_COMMIT_BRANCH --follow-tags -o ci.skip
 
@@ -99,4 +98,4 @@ publish-ios-sdk:
     git push github "$NEW_VERSION" || true
     gh release create "$NEW_VERSION" --title "$NEW_VERSION" --notes-file GithubRelease.md || true
     git remote remove github
-    echo "✅ iOS SDK $NEW_VERSION published"
+    echo "iOS SDK $NEW_VERSION published"
