@@ -11,22 +11,23 @@ let package = Package(
     products: [
         .library(
             name: "NoctuaSDK",
+            type: .dynamic,
             targets: ["NoctuaSDK"]
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/adjust/ios_sdk.git", .upToNextMajor(from: "5.4.1")),
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "11.6.0")),
-        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", .upToNextMajor(from: "18.0.0"))
+        .package(url: "https://github.com/adjust/ios_sdk.git", from: "5.4.1"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "11.6.0"),
+        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", from: "18.0.0")
     ],
     targets: [
-        // Main target
         .target(
             name: "NoctuaSDK",
             dependencies: [
                 .product(name: "AdjustSdk", package: "ios_sdk", condition: .when(platforms: [.iOS])),
                 .product(name: "AdjustWebBridge", package: "ios_sdk", condition: .when(platforms: [.iOS])),
 
+                .product(name: "FirebaseCore",  package: "firebase-ios-sdk", condition: .when(platforms: [.iOS])),
                 .product(name: "FirebaseAnalytics",  package: "firebase-ios-sdk", condition: .when(platforms: [.iOS])),
                 .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk", condition: .when(platforms: [.iOS])),
                 .product(name: "FirebaseMessaging",  package: "firebase-ios-sdk", condition: .when(platforms: [.iOS])),
