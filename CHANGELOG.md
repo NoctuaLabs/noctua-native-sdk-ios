@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-07-10
+
+### 🚀 Features
+
+- Noctua sdk dynamic support
+
 ## [0.3.0] - 2025-07-07
 
 ### 🚀 Features
