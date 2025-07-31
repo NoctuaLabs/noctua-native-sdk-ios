@@ -22,6 +22,10 @@ import Foundation
     @objc public static func trackCustomEvent(_ eventName: String, payload: [String:Any] = [:]) {
         plugin?.trackCustomEvent(eventName, payload: payload)
     }
+    
+    @objc public static func trackCustomEventWithRevenue(_ eventName: String, revenue: Double, currency: String, payload: [String:Any] = [:]) {
+        plugin?.trackCustomEventWithRevenue(eventName, revenue: revenue, currency: currency, payload: payload)
+    }
 
     @objc public static func purchaseItem(_ productId: String, completion: @escaping (Bool, String) -> Void) {
         plugin?.purchaseItem(productId: productId, completion: completion)
