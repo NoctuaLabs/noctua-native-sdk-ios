@@ -112,6 +112,38 @@ class AdjustService {
         Adjust.trackEvent(event)
 #endif
     }
+    
+    func trackCustomEventWithRevenue(_ eventName: String, revenue: Double, currency: String, payload: [String:Any]) {
+#if canImport(AdjustSdk)
+        if (config.customEventDisabled ?? false) {
+            logger.warning("custom event is disabled")
+            return
+        }
+        
+        // Check for null
+        guard let eventToken = config.eventMap[eventName] else {
+            logger.warning("no eventToken for \(eventName)")
+            return
+        }
+
+        // Check for empty string
+        guard !eventToken.isEmpty else {
+            logger.warning("no eventToken for \(eventName)")
+            return
+        }
+        
+        let event = ADJEvent(eventToken: eventToken)!
+        event.setRevenue(revenue, currency: currency)
+
+        // Add parameters to the event`
+        for (key, value) in payload {
+            event.addCallbackParameter(key, value: "\(value)")
+        }
+        
+        Adjust.trackEvent(event)
+#endif
+
+    }
 
     func onOnline() {
 #if canImport(AdjustSdk)
