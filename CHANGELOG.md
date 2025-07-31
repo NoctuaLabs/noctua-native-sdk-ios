@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2025-07-31
+
+### 🚀 Features
+
+- Custom event with revenue
+
 ## [0.4.0] - 2025-07-10
 
 ### 🚀 Features
